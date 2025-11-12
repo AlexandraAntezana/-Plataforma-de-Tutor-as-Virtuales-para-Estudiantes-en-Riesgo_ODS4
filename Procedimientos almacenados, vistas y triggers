@@ -1,0 +1,132 @@
+Procedimientos Almacenados:
+-- SP para agendar sesión con validaciones
+DELIMITER $$
+CREATE PROCEDURE sp_agendar_sesion(
+    IN p_estudiante_id INT,
+    IN p_tutor_id INT,
+    IN p_materia_id INT,
+    IN p_fecha_hora DATETIME,
+    IN p_duracion INT
+)
+BEGIN
+    DECLARE v_conflict_count INT;
+    DECLARE v_tutor_available INT;
+    
+    -- Verificar conflictos de horario
+    SELECT COUNT(*) INTO v_conflict_count
+    FROM sesion_tutoria
+    WHERE tutor_id = p_tutor_id
+    AND estado IN ('programada', 'en_curso')
+    AND fecha_hora = p_fecha_hora;
+    
+    -- Verificar disponibilidad del tutor
+    SELECT COUNT(*) INTO v_tutor_available
+    FROM disponibilidad
+    WHERE tutor_id = p_tutor_id
+    AND DAYNAME(p_fecha_hora) = dia_semana
+    AND TIME(p_fecha_hora) BETWEEN hora_inicio AND hora_fin;
+    
+    IF v_conflict_count = 0 AND v_tutor_available > 0 THEN
+        INSERT INTO sesion_tutoria (estudiante_id, tutor_id, materia_id, fecha_hora, duracion_minutos)
+        VALUES (p_estudiante_id, p_tutor_id, p_materia_id, p_fecha_hora, p_duracion);
+        
+        SELECT LAST_INSERT_ID() as sesion_id, 'success' as status;
+    ELSE
+        SELECT NULL as sesion_id, 'conflict' as status;
+    END IF;
+END$$
+DELIMITER ;
+
+-- SP para generar reporte de estudiantes en riesgo
+DELIMITER $$
+CREATE PROCEDURE sp_report_estudiantes_riesgo()
+BEGIN
+    SELECT 
+        e.id,
+        u.nombre,
+        u.apellido,
+        e.codigo_estudiante,
+        e.promedio_general,
+        COUNT(st.id) as sesiones_solicitadas,
+        AVG(c.puntuacion) as satisfaccion_promedio
+    FROM estudiante e
+    JOIN usuario u ON e.usuario_id = u.id
+    LEFT JOIN sesion_tutoria st ON e.id = st.estudiante_id
+    LEFT JOIN calificacion c ON st.id = c.sesion_id
+    WHERE e.estado_academico = 'riesgo'
+    GROUP BY e.id
+    ORDER BY e.promedio_general ASC;
+END$$
+DELIMITER ;
+Vistas:
+-- Vista para dashboard de coordinadores
+CREATE VIEW vw_dashboard_coordinador AS
+SELECT 
+    COUNT(DISTINCT e.id) as total_estudiantes,
+    COUNT(DISTINCT t.id) as total_tutores,
+    COUNT(DISTINCT st.id) as sesiones_mes,
+    AVG(c.puntuacion) as satisfaccion_promedio,
+    COUNT(DISTINCT CASE WHEN e.estado_academico = 'riesgo' THEN e.id END) as estudiantes_riesgo
+FROM estudiante e
+CROSS JOIN tutor t
+CROSS JOIN sesion_tutoria st
+LEFT JOIN calificacion c ON st.id = c.sesion_id
+WHERE st.fecha_hora >= DATE_SUB(NOW(), INTERVAL 1 MONTH);
+
+-- Vista para disponibilidad de tutores
+CREATE VIEW vw_tutores_disponibles AS
+SELECT 
+    t.id as tutor_id,
+    u.nombre,
+    u.apellido,
+    m.nombre as materia,
+    d.dia_semana,
+    d.hora_inicio,
+    d.hora_fin
+FROM tutor t
+JOIN usuario u ON t.usuario_id = u.id
+JOIN tutor_especialidad te ON t.id = te.tutor_id
+JOIN materia m ON te.materia_id = m.id
+JOIN disponibilidad d ON t.id = d.tutor_id
+WHERE u.estado = 'activo'
+AND t.estado_verificacion = 'aprobado';
+Triggers:
+-- Trigger para actualizar calificación promedio del tutor
+DELIMITER $$
+CREATE TRIGGER tr_actualizar_calificacion_tutor
+AFTER INSERT ON calificacion
+FOR EACH ROW
+BEGIN
+    UPDATE tutor t
+    JOIN sesion_tutoria st ON t.id = st.tutor_id
+    SET t.calificacion_promedio = (
+        SELECT AVG(puntuacion) 
+        FROM calificacion c 
+        JOIN sesion_tutoria s ON c.sesion_id = s.id 
+        WHERE s.tutor_id = t.id
+    ),
+    t.sesiones_completadas = (
+        SELECT COUNT(*) 
+        FROM sesion_tutoria s 
+        WHERE s.tutor_id = t.id 
+        AND s.estado = 'completada'
+    )
+    WHERE st.id = NEW.sesion_id;
+END$$
+DELIMITER ;
+
+-- Trigger para validar horario de sesión
+DELIMITER $$
+CREATE TRIGGER tr_validar_horario_sesion
+BEFORE INSERT ON sesion_tutoria
+FOR EACH ROW
+BEGIN
+    IF TIME(NEW.fecha_hora) < '07:00:00' OR TIME(NEW.fecha_hora) > '22:00:00' THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Las sesiones solo pueden programarse entre 7:00 y 22:00 horas';
+    END IF;
+    
+    IF NEW.duracion_minutos < 30 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'La duración mínima de una sesión es 30 minutos';
+    END IF;
+END$$
+DELIMITER ;
