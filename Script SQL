@@ -1,0 +1,72 @@
+-- Creación de la Base de Datos
+CREATE DATABASE plataforma_tutorias;
+USE plataforma_tutorias;
+
+-- Tabla Usuario
+CREATE TABLE usuario (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    rol ENUM('estudiante', 'tutor', 'coordinador') NOT NULL,
+    nombre VARCHAR(100) NOT NULL,
+    apellido VARCHAR(100) NOT NULL,
+    telefono VARCHAR(20),
+    estado ENUM('activo', 'inactivo', 'pendiente') DEFAULT 'pendiente',
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Tabla Estudiante
+CREATE TABLE estudiante (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    usuario_id INT UNIQUE NOT NULL,
+    codigo_estudiante VARCHAR(20) UNIQUE NOT NULL,
+    promedio_general DECIMAL(3,2),
+    estado_academico ENUM('regular', 'riesgo', 'graduado') DEFAULT 'regular',
+    FOREIGN KEY (usuario_id) REFERENCES usuario(id) ON DELETE CASCADE
+);
+
+-- Tabla Tutor
+CREATE TABLE tutor (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    usuario_id INT UNIQUE NOT NULL,
+    especialidades TEXT,
+    promedio_minimo DECIMAL(3,2) DEFAULT 15.00,
+    estado_verificacion ENUM('pendiente', 'aprobado', 'rechazado') DEFAULT 'pendiente',
+    calificacion_promedio DECIMAL(2,1) DEFAULT 0.0,
+    sesiones_completadas INT DEFAULT 0,
+    FOREIGN KEY (usuario_id) REFERENCES usuario(id) ON DELETE CASCADE
+);
+
+-- Tabla Materia
+CREATE TABLE materia (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    codigo VARCHAR(10) UNIQUE NOT NULL,
+    nombre VARCHAR(100) NOT NULL,
+    descripcion TEXT,
+    creditos INT NOT NULL,
+    estado ENUM('activa', 'inactiva') DEFAULT 'activa'
+);
+
+-- Tabla Sesión de Tutoría
+CREATE TABLE sesion_tutoria (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    estudiante_id INT NOT NULL,
+    tutor_id INT NOT NULL,
+    materia_id INT NOT NULL,
+    fecha_hora DATETIME NOT NULL,
+    duracion_minutos INT DEFAULT 30,
+    estado ENUM('programada', 'en_curso', 'completada', 'cancelada') DEFAULT 'programada',
+    enlace_videollamada VARCHAR(500),
+    calificacion_id INT,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (estudiante_id) REFERENCES estudiante(id),
+    FOREIGN KEY (tutor_id) REFERENCES tutor(id),
+    FOREIGN KEY (materia_id) REFERENCES materia(id)
+);
+
+-- Índices para optimización
+CREATE INDEX idx_sesion_fecha ON sesion_tutoria(fecha_hora);
+CREATE INDEX idx_sesion_estado ON sesion_tutoria(estado);
+CREATE INDEX idx_usuario_email ON usuario(email);
+CREATE INDEX idx_estudiante_codigo ON estudiante(codigo_estudiante);
