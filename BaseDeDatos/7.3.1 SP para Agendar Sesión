@@ -1,0 +1,20 @@
+DELIMITER $$
+CREATE PROCEDURE sp_agendar_sesion(
+  IN p_estudiante INT,
+  IN p_tutor INT,
+  IN p_materia INT,
+  IN p_fecha DATETIME
+)
+BEGIN
+  IF EXISTS (SELECT 1 FROM sesion_tutoria 
+             WHERE tutor_id = p_tutor 
+             AND fecha_hora = p_fecha
+             AND estado = 'programada') THEN
+    SELECT 'conflicto' AS estado;
+  ELSE
+    INSERT INTO sesion_tutoria(estudiante_id,tutor_id,materia_id,fecha_hora,estado)
+    VALUES(p_estudiante,p_tutor,p_materia,p_fecha,'programada');
+    SELECT 'ok' AS estado;
+  END IF;
+END$$
+DELIMITER ;
