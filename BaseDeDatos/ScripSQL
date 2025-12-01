@@ -1,0 +1,75 @@
+-- Creación de la Base de Datos
+CREATE TABLE usuario (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    rol ENUM('estudiante','tutor','coordinador') NOT NULL,
+    nombre VARCHAR(100),
+    apellido VARCHAR(100),
+    estado ENUM('activo','inactivo','pendiente') DEFAULT 'pendiente'
+);
+
+CREATE TABLE estudiante (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT UNIQUE NOT NULL,
+    codigo_estudiante VARCHAR(20) UNIQUE,
+    promedio_general DECIMAL(3,2),
+    estado_academico ENUM('regular','riesgo','graduado'),
+    FOREIGN KEY (usuario_id) REFERENCES usuario(id)
+);
+
+CREATE TABLE tutor (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT UNIQUE NOT NULL,
+    estado_verificacion ENUM('pendiente','aprobado','rechazado'),
+    calificacion_promedio DECIMAL(3,2) DEFAULT 0,
+    FOREIGN KEY (usuario_id) REFERENCES usuario(id)
+);
+
+CREATE TABLE materia (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    codigo VARCHAR(10) UNIQUE,
+    nombre VARCHAR(100),
+    creditos INT
+);
+
+CREATE TABLE tutor_especialidad (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    tutor_id INT,
+    materia_id INT,
+    promedio_materia DECIMAL(3,2),
+    FOREIGN KEY (tutor_id) REFERENCES tutor(id),
+    FOREIGN KEY (materia_id) REFERENCES materia(id)
+);
+
+CREATE TABLE disponibilidad (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    tutor_id INT,
+    dia_semana VARCHAR(15),
+    hora_inicio TIME,
+    hora_fin TIME,
+    FOREIGN KEY (tutor_id) REFERENCES tutor(id)
+);
+
+CREATE TABLE sesion_tutoria (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    estudiante_id INT,
+    tutor_id INT,
+    materia_id INT,
+    fecha_hora DATETIME,
+    duracion INT DEFAULT 30,
+    estado ENUM('programada','en_curso','completada','cancelada'),
+    enlace_videollamada VARCHAR(300),
+    FOREIGN KEY (estudiante_id) REFERENCES estudiante(id),
+    FOREIGN KEY (tutor_id) REFERENCES tutor(id),
+    FOREIGN KEY (materia_id) REFERENCES materia(id)
+);
+
+CREATE TABLE calificacion (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    sesion_id INT,
+    puntuacion INT,
+    comentarios TEXT,
+    fecha_calificacion DATE,
+    FOREIGN KEY (sesion_id) REFERENCES sesion_tutoria(id)
+);
