@@ -1,0 +1,8 @@
+CREATE VIEW vw_sesiones_programadas AS
+SELECT s.id, e.codigo_estudiante, u.nombre AS tutor, m.nombre AS materia, s.fecha_hora
+FROM sesion_tutoria s
+JOIN estudiante e ON e.id = s.estudiante_id
+JOIN tutor t ON t.id = s.tutor_id
+JOIN usuario u ON u.id = t.usuario_id
+JOIN materia m ON m.id = s.materia_id
+WHERE s.estado = 'programada';

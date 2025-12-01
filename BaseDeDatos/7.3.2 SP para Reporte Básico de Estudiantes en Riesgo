@@ -1,0 +1,9 @@
+DELIMITER $$
+CREATE PROCEDURE sp_estudiantes_riesgo()
+BEGIN
+  SELECT e.id, u.nombre, u.apellido, e.promedio_general
+  FROM estudiante e
+  JOIN usuario u ON u.id = e.usuario_id
+  WHERE e.estado_academico = 'riesgo';
+END$$
+DELIMITER ;
