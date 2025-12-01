@@ -1,0 +1,14 @@
+DELIMITER $$
+CREATE TRIGGER tr_actualizar_promedio
+AFTER INSERT ON calificacion
+FOR EACH ROW
+BEGIN
+  UPDATE tutor t
+  SET calificacion_promedio = (
+    SELECT AVG(puntuacion)
+    FROM calificacion c
+    JOIN sesion_tutoria s ON s.id = c.sesion_id
+    WHERE s.tutor_id = t.id
+  );
+END$$
+DELIMITER ;
