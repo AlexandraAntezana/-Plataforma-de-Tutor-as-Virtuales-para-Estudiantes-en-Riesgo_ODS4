@@ -1,0 +1,7 @@
+CREATE VIEW vw_tutores_disponibles AS
+SELECT t.id AS tutor_id, u.nombre, u.apellido, m.nombre AS materia
+FROM tutor t
+JOIN usuario u ON t.usuario_id = u.id
+JOIN tutor_especialidad te ON te.tutor_id = t.id
+JOIN materia m ON m.id = te.materia_id
+WHERE t.estado_verificacion = 'aprobado';
