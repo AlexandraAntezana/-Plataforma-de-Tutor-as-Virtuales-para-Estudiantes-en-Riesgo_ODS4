@@ -1,0 +1,37 @@
+La evaluación se basó en criterios de coherencia, buenas prácticas de diseño, usabilidad y consistencia.
+Coherencia entre arquitectura, prototipo y base de datos
+La arquitectura en capas (Presentación – Lógica – Datos) coincide con las funciones del prototipo.
+
+
+Cada pantalla del prototipo se corresponde con uno o más módulos/lógicas de negocio del backend.
+
+
+Las entidades del modelo (Usuario, Estudiante, Tutor, Materia, Sesion, etc.) están reflejadas tanto en la BD como en las funcionalidades del sistema.
+
+
+Identificación de mejoras
+Se recomienda optimizar el módulo de disponibilidad para evitar sobrecarga si un tutor tiene demasiados horarios.
+
+
+Incluir un cache simple para consultas frecuentes como “ver tutores disponibles”.
+
+
+Evaluación de principios de usabilidad
+Consistencia: colores, botones e iconos homogéneos.
+
+
+Visibilidad del estado del sistema: estados de sesión con badges y colores.
+
+
+Control del usuario: navegación clara, botones “ver detalles” y flujos cortos.
+
+
+Simplicidad: pantallas limpias, información ordenada.
+
+
+Accesibilidad: tipografías legibles, contraste adecuado.
+
+
+Conclusión:
+ El diseño logra un nivel alto de usabilidad y es coherente a nivel técnico.
+
