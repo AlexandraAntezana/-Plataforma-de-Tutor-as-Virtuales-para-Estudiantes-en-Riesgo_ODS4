@@ -1,0 +1,32 @@
+La retroalimentación se simuló mediante:
+✔ Revisión heurística basada en Nielsen
+Se detectó que la pantalla de historial necesitaba mayor separación visual entre sesiones → se aplicó espaciado y jerarquía.
+
+
+Algunos colores debían ajustarse para legibilidad (contraste).
+
+
+Se recomendó unificar los estilos de botones para evitar confusión → aplicado.
+
+
+✔ Cambios realizados
+Se ordenaron las tarjetas con consistencia de sombras.
+
+
+Se estandarizó el formato de fecha/hora.
+
+
+Se agregó el estado “calificada” en sesiones completadas.
+
+
+Se mejoró la navegación agregando breadcrumbs en prototipo.
+
+
+✔ Mejoras propuestas
+Agregar un modo oscuro para accesibilidad avanzada.
+
+
+Implementar un chatbot de asistencia básica para estudiantes nuevos.
+
+
+Incluir filtros inteligentes en el historial (por materia/estado).
